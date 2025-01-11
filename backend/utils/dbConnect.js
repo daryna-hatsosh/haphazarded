@@ -20,13 +20,16 @@ async function dbConnect() {
 
   if (!cached.promise) {
     console.log('Creating new connection');
-    console.log(MONGODB_URI);
     cached.promise = mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
     }).then((mongoose) => {
         console.log('Connected to database:', mongoose.connection.name);
         return mongoose;
+      }).catch((error) => {
+        console.error('Error connecting to database:', error);
+        throw error;
       });
   }
 
