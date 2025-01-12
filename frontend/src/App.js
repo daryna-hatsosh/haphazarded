@@ -11,7 +11,7 @@ function App() {
       <AppBar position="static" sx={{ bgcolor: '#33658A' }}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Haphazarded
+            Haphazarded Chats
           </Typography>
         </Toolbar>
       </AppBar>
