@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, Typography, Box, useMediaQuery } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, useMediaQuery, IconButton } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import ChatList from './components/ChatList';
 import ChatView from './components/ChatView';
 
@@ -8,15 +9,20 @@ function App() {
   const isMobile = useMediaQuery('(max-width: 600px)');
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, bgcolor: '#f0f2f5', height: '100vh', overflow: 'hidden' }}>
       <AppBar position="static" sx={{ bgcolor: '#33658A' }}>
         <Toolbar>
+          {isMobile && (
+            <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
+              <MenuIcon />
+            </IconButton>
+          )}
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Haphazarded Chats
           </Typography>
         </Toolbar>
       </AppBar>
-      <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100vh - 64px)', width: '100vw' }}>
+      <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: 'calc(100vh - 64px)' }}>
         {isMobile ? (
           selectedChat ? (
             <ChatView chat={selectedChat} onBack={() => setSelectedChat(null)} />
@@ -25,7 +31,7 @@ function App() {
           )
         ) : (
           <>
-            <Box sx={{ width: '30%', borderRight: '1px solid #ddd', overflow: 'auto' }}>
+            <Box sx={{ width: '30%', borderRight: '1px solid #ddd', overflow: 'auto', bgcolor: 'background.paper' }}>
               <ChatList onSelectChat={setSelectedChat} />
             </Box>
             {selectedChat ? (

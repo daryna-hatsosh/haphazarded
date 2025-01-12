@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography } from '@mui/material';
+import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography, Divider } from '@mui/material';
 
 function ChatList({ onSelectChat }) {
   const [chats, setChats] = useState([]);
@@ -22,21 +22,24 @@ function ChatList({ onSelectChat }) {
     fetchChats();
   }, []);
 
-  if (loading) return <Typography>Loading chats...</Typography>;
-  if (error) return <Typography>Error: {error}</Typography>;
+  if (loading) return <Typography sx={{ p: 2 }}>Loading chats...</Typography>;
+  if (error) return <Typography sx={{ p: 2 }}>Error: {error}</Typography>;
 
   return (
-    <List sx={{ width: '100%', bgcolor: 'background.paper', borderRight: { xs: 0 } }}>
+    <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
       {chats.map(chat => (
-        <ListItem button key={chat._id} onClick={() => onSelectChat(chat)}>
-          <ListItemAvatar>
-            <Avatar>{chat.firstName.charAt(0)}</Avatar>
-          </ListItemAvatar>
-          <ListItemText
-            primary={`${chat.firstName} ${chat.lastName}`}
-            secondary={<Typography variant="body2" color="textSecondary">Last message preview...</Typography>}
-          />
-        </ListItem>
+        <React.Fragment key={chat._id}>
+          <ListItem button="true" onClick={() => onSelectChat(chat)}>
+            <ListItemAvatar>
+              <Avatar>{chat.firstName.charAt(0)}</Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary={<Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{`${chat.firstName} ${chat.lastName}`}</Typography>}
+              secondary={<Typography variant="body2" color="textSecondary">Last message preview...</Typography>}
+            />
+          </ListItem>
+          <Divider variant="inset" component="li" />
+        </React.Fragment>
       ))}
     </List>
   );
