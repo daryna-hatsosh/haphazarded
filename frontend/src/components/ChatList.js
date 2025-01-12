@@ -10,6 +10,7 @@ function ChatList({ onSelectChat }) {
   useEffect(() => {
     const fetchChats = async () => {
       try {
+        console.log(`${process.env.REACT_APP_API_URL}/api/chats`);
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/chats`);
         setChats(response.data);
       } catch (err) {
