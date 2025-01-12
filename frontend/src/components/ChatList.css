@@ -1,7 +1,7 @@
 .chat-container {
-  width: 30%;
+  width: 100%;
   background-color: #f9f9f9;
-  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
   overflow-y: auto;
 }
 
@@ -51,4 +51,12 @@
 .chat-message {
   color: #999;
   font-size: 14px;
+}
+
+/* Responsive Design */
+@media (min-width: 600px) {
+  .chat-container {
+    width: 30%;
+    border-right: 1px solid #ddd;
+  }
 } 

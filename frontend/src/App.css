@@ -13,7 +13,7 @@
 
 /* AppBar Styles */
 .custom-appbar {
-  background-color: #33658A; /* Ensure this matches the AppBar in App.js */
+  background-color: #33658A;
 }
 
 /* Header Styles */
@@ -33,6 +33,7 @@
 /* Body Styles */
 .App-body {
   display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 1200px;
   margin: 20px auto;
@@ -65,5 +66,12 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (min-width: 600px) {
+  .App-body {
+    flex-direction: row;
   }
 }

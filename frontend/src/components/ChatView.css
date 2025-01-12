@@ -1,5 +1,12 @@
 .chat-view {
-  width: 70%;
+  width: 100%;
   padding: 20px;
   overflow-y: auto;
+}
+
+/* Responsive Design */
+@media (min-width: 600px) {
+  .chat-view {
+    width: 70%;
+  }
 } 
