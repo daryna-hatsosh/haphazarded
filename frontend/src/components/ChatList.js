@@ -10,7 +10,7 @@ function ChatList({ onSelectChat }) {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await axios.get('/api/chats');
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/chats`);
         setChats(response.data);
       } catch (err) {
         setError(err.message);
@@ -28,9 +28,9 @@ function ChatList({ onSelectChat }) {
   return (
     <List sx={{ width: '30%', bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider' }}>
       {chats.map(chat => (
-        <ListItem button key={chat._id} onClick={() => onSelectChat(chat)}>
+        <ListItem button="true" key={chat._id} onClick={() => onSelectChat(chat)}>
           <ListItemAvatar>
-            <Avatar sx={{ bgcolor: '#33658A' }}>{chat.firstName.charAt(0)}</Avatar>
+            <Avatar>{chat.firstName.charAt(0)}</Avatar>
           </ListItemAvatar>
           <ListItemText
             primary={`${chat.firstName} ${chat.lastName}`}
