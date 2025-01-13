@@ -13,7 +13,8 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^3.0.0",
     "axios": "^1.0.0",
-    "@mui/icons-material": "^6.x.x"
+    "@mui/icons-material": "^6.x.x",
+    "date-fns": "^2.29.3"
   },
   "scripts": {
     "predeploy": "npm run build",

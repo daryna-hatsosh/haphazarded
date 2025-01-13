@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Box, Typography, Paper, TextField, IconButton, Avatar, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, Alert } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
+import { format, isToday } from 'date-fns';
+import { AuthContext } from '../context/AuthContext';
 
 function ChatView({ chat, onBack, onDelete }) {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     fetchMessages();
@@ -30,7 +33,7 @@ function ChatView({ chat, onBack, onDelete }) {
     try {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`, {
         content: newMessage,
-        sender: 'self', // Assuming 'self' is the identifier for the current user
+        userId: user.userId,
       });
       setMessages([...messages, response.data.data]);
       setNewMessage('');
@@ -52,6 +55,11 @@ function ChatView({ chat, onBack, onDelete }) {
 
   const handleCloseSnackbar = () => {
     setErrorMessage('');
+  };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return isToday(date) ? format(date, 'p') : format(date, 'P');
   };
 
   return (
@@ -76,21 +84,29 @@ function ChatView({ chat, onBack, onDelete }) {
             key={message._id}
             sx={{
               display: 'flex',
-              justifyContent: message.sender === 'self' ? 'flex-end' : 'flex-start',
+              flexDirection: 'column',
+              alignItems: message.userId === user.userId ? 'flex-end' : 'flex-start',
               mb: 1,
             }}
           >
             <Box
               sx={{
                 maxWidth: '70%',
-                bgcolor: message.sender === 'self' ? '#e0f7fa' : '#f1f1f1',
+                bgcolor: message.userId === user.userId ? '#e0f7fa' : '#f1f1f1',
                 p: 1,
                 borderRadius: 2,
                 boxShadow: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                wordWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
               }}
             >
-              <Typography variant="body1">{message.content}</Typography>
+              <Typography variant="body1" sx={{ mb: 0.5 }}>{message.content}</Typography>
             </Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5 }}>
+              {formatTimestamp(message.createdAt)}
+            </Typography>
           </Box>
         ))}
       </Box>

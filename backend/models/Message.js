@@ -6,7 +6,11 @@ const MessageSchema = new mongoose.Schema({
     type: String,
     required: true, // Message content is required
   },
-  sender: { type: String, required: true, default: 'user' },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
   chatId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Chat', // Reference to the Chat model

@@ -22,9 +22,6 @@ export default async function handler(req, res) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    console.log(user.password);
-    console.log(password);
-
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -32,7 +29,7 @@ export default async function handler(req, res) {
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.status(200).json({ success: true, token });
+    res.status(200).json({ userId: user._id, success: true, token });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
