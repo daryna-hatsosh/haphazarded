@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { AppBar, Toolbar, Typography, Box, useMediaQuery, IconButton, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChatList from './components/ChatList';
@@ -18,13 +18,7 @@ function App() {
   const [chats, setChats] = useState([]);
   const isMobile = useMediaQuery('(max-width: 600px)');
 
-  useEffect(() => {
-    if (user) {
-      fetchChats();
-    }
-  }, [user]);
-
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/chats`, {
         headers: {
@@ -33,13 +27,17 @@ function App() {
       });
       if (response.data.success) {
         setChats(response.data.data);
-      } else {
-        console.error('Failed to fetch chats:', response.data.message);
       }
     } catch (error) {
       console.error('Error fetching chats:', error);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (user) {
+      fetchChats();
+    }
+  }, [user, fetchChats]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);

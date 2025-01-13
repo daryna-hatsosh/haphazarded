@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { Box, Typography, Paper, TextField, IconButton, Avatar, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, Alert } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from '@mui/icons-material/Send';
@@ -14,18 +14,18 @@ function ChatView({ chat, onBack, onDelete }) {
   const [newMessage, setNewMessage] = useState('');
   const { user } = useContext(AuthContext);
 
-  useEffect(() => {
-    fetchMessages();
-  }, [chat]);
-
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`);
       setMessages(response.data.data);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  };
+  }, [chat._id]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
