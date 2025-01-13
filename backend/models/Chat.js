@@ -19,6 +19,11 @@ const ChatSchema = new mongoose.Schema({
     enum: ['predefined', 'user'],
     default: 'user',
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: function() { return this.type === 'user'; }, // Only required for user-specific chats
+  },
 });
 
 export default mongoose.models.Chat || mongoose.model('Chat', ChatSchema);

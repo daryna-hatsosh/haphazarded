@@ -1,50 +1,46 @@
 import dbConnect from '../../../utils/dbConnect';
-import Chat from '../../../models/Chat';
+import Message from '../../../models/Message';
 import corsMiddleware from '../../../middleware/corsMiddleware';
 
 export default async function handler(req, res) {
-  await corsMiddleware(req, res, async () => {
-    const { id } = req.query;
+  try {
+    console.log('Starting handler for /api/messages/[chatId]');
+    await corsMiddleware(req, res);
+    console.log('CORS middleware executed');
+
+    const { chatId } = req.query;
+    console.log(`Chat ID: ${chatId}`);
 
     await dbConnect();
+    console.log('Database connected');
 
     if (req.method === 'GET') {
       try {
-        const chat = await Chat.findById(id);
-        if (!chat) {
-          return res.status(404).json({ success: false, message: 'Chat not found' });
-        }
-        res.status(200).json({ success: true, data: chat });
+        const messages = await Message.find({ chatId });
+        console.log('Messages fetched:', messages);
+        return res.status(200).json({ success: true, data: messages });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error fetching messages:', error);
+        return res.status(500).json({ success: false, error: error.message });
       }
-    } else if (req.method === 'PUT') {
+    } else if (req.method === 'POST') {
       try {
-        const { firstName, lastName } = req.body;
-        const updatedChat = await Chat.findByIdAndUpdate(
-          id,
-          { firstName, lastName },
-          { new: true, runValidators: true }
-        );
-        if (!updatedChat) {
-          return res.status(404).json({ success: false, message: 'Chat not found' });
-        }
-        res.status(200).json({ success: true, data: updatedChat });
+        const { content, sender } = req.body;
+        console.log('Creating new message:', { content, sender });
+        const newMessage = new Message({ chatId, content, sender });
+        await newMessage.save();
+        console.log('New message saved:', newMessage);
+        return res.status(201).json({ success: true, data: newMessage });
       } catch (error) {
-        res.status(400).json({ success: false, error: error.message });
-      }
-    } else if (req.method === 'DELETE') {
-      try {
-        const deletedChat = await Chat.findByIdAndDelete(id);
-        if (!deletedChat) {
-          return res.status(404).json({ success: false, message: 'Chat not found' });
-        }
-        res.status(200).json({ success: true, data: deletedChat });
-      } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error creating message:', error);
+        return res.status(400).json({ success: false, error: error.message });
       }
     } else {
-      res.status(405).json({ success: false, message: 'Method not allowed' });
+      console.log('Method not allowed');
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
     }
-  });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
 }
