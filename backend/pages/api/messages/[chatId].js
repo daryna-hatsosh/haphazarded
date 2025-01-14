@@ -33,10 +33,10 @@ export default async function handler(req, res) {
         }
     } else if (req.method === 'POST') {
       try {
-        const { content } = req.body;
+        const { content, userId } = req.body;
         console.log(`Creating new message for chatId: ${chatId}`);
 
-        const newMessage = new Message({ chatId, content });
+        const newMessage = new Message({ chatId, content, userId });
         await newMessage.save();
         console.log('New message saved:', newMessage);
 
