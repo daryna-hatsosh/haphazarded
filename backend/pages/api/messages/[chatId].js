@@ -36,7 +36,7 @@ export default async function handler(req, res) {
         const { content } = req.body;
         console.log(`Creating new message for chatId: ${chatId}`);
 
-        const newMessage = new Message({ chatId, content, userId });
+        const newMessage = new Message({ chatId, content });
         await newMessage.save();
         console.log('New message saved:', newMessage);
 
