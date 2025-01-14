@@ -24,7 +24,7 @@ jobs:
 
       - name: Build
         env:
-          REACT_APP_API_URL: "https://haphazarded.vercel.app"
+          REACT_APP_API_URL: "https://haphazarded-production.up.railway.app"
         run: npm run build
         working-directory: ./frontend
 
