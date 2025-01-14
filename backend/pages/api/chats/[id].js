@@ -5,6 +5,7 @@ import corsMiddleware from '../../../middleware/corsMiddleware';
 export default async function handler(req, res) {
   try {
     await corsMiddleware(req, res);
+    await authMiddleware(req, res);
 
     const { chatId } = req.query;
 
