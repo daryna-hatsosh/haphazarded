@@ -86,7 +86,7 @@ function App() {
         <AppBar position="static" sx={{ bgcolor: '#33658A' }}>
           <Toolbar>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Haphazarded Chats
+              Haphazarded
             </Typography>
             <Button color="inherit" onClick={handleRegisterOpen}>
               Register
