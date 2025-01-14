@@ -25,12 +25,13 @@ export default async function handler(req, res) {
     console.log('Database connected.');
 
     if (req.method === 'GET') {
-        try {
-          const messages = await Message.find({ chatId });
-          return res.status(200).json({ success: true, data: messages });
-        } catch (error) {
-          return res.status(500).json({ success: false, error: error.message });
-        }
+      try {
+        const messages = await Message.find({ chatId });
+        return res.status(200).json({ success: true, data: messages });
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        return res.status(500).json({ success: false, error: error.message });
+      }
     } else if (req.method === 'POST') {
       try {
         const { content, userId } = req.body;
@@ -41,40 +42,47 @@ export default async function handler(req, res) {
         console.log('New message saved:', newMessage);
 
         // Produce a random response
-        console.log('Fetching random quote...');
-        const response = await axios.get('https://api.quotable.io/random');
-        console.log('Random quote fetched:', response.data.content);
+        try {
+          console.log('Fetching random quote...');
+          const response = await axios.get('https://api.quotable.io/random', {
+            httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false })
+          });
+          console.log('Random quote fetched:', response.data[0].content);
 
-        const randomResponse = {
-          chatId,
-          message: response.data.content,
-          timestamp: Date.now(),
-        };
+          const randomResponse = {
+            chatId,
+            message: response.data[0].content,
+            timestamp: Date.now(),
+          };
 
-        console.log('Connecting to Kafka broker...');
-        await producer.connect();
-        console.log('Producer connected.');
+          console.log('Connecting to Kafka broker...');
+          await producer.connect();
+          console.log('Producer connected.');
 
-        console.log('Sending message to Kafka:', JSON.stringify(randomResponse));
-        await producer.send({
-          topic: 'random-responses',
-          messages: [{ value: JSON.stringify(randomResponse) }],
-        });
-        console.log('Message sent to Kafka.');
+          console.log('Sending message to Kafka:', JSON.stringify(randomResponse));
+          await producer.send({
+            topic: 'random-responses',
+            messages: [{ value: JSON.stringify(randomResponse) }],
+          });
+          console.log('Message sent to Kafka.');
 
-        await producer.disconnect();
-        console.log('Producer disconnected.');
+          await producer.disconnect();
+          console.log('Producer disconnected.');
 
-        const responseMessage = new Message({
+          const responseMessage = new Message({
             chatId,
             content: randomResponse.message,
             userId: 'systemBot', // or another identifier for system-generated messages
           });
-        
-        await responseMessage.save();
-        console.log('Response message saved:', responseMessage);
 
-        return res.status(201).json({ success: true, data: newMessage });
+          await responseMessage.save();
+          console.log('Response message saved:', responseMessage);
+
+          return res.status(201).json({ success: true, data: newMessage });
+        } catch (apiError) {
+          console.error('Error fetching random quote:', apiError);
+          return res.status(500).json({ success: false, error: 'Failed to fetch random quote' });
+        }
       } catch (error) {
         console.error('Error processing POST request:', error);
         return res.status(400).json({ success: false, error: error.message });
