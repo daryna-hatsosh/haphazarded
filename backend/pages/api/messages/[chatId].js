@@ -1,7 +1,6 @@
 import dbConnect from '../../../utils/dbConnect';
 import Message from '../../../models/Message';
 import { Kafka } from 'kafkajs';
-import axios from 'axios';
 import corsMiddleware from '../../../middleware/corsMiddleware';
 import authMiddleware from '../../../middleware/authMiddleware';
 
@@ -11,6 +10,26 @@ const kafka = new Kafka({
 });
 
 const producer = kafka.producer();
+
+// Predefined list of random responses
+const predefinedResponses = [
+  "Hello! How can I assist you today?",
+  "Thank you for reaching out!",
+  "I'm here to help, what do you need?",
+  "Let's solve this together!",
+  "Your request is important to us.",
+  "Please hold on while I check that for you.",
+  "I'm glad to assist you with that.",
+  "What else can I do for you today?",
+  "Feel free to ask any questions.",
+  "I'm here to provide support."
+];
+
+// Function to select a random response from the predefined list
+function getRandomResponse() {
+  const randomIndex = Math.floor(Math.random() * predefinedResponses.length);
+  return predefinedResponses[randomIndex];
+}
 
 export default async function handler(req, res) {
   try {
@@ -41,48 +60,41 @@ export default async function handler(req, res) {
         await newMessage.save();
         console.log('New message saved:', newMessage);
 
-        // Produce a random response
-        try {
-          console.log('Fetching random quote...');
-          const response = await axios.get('https://api.quotable.io/random', {
-            httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false })
-          });
-          console.log('Random quote fetched:', response.data[0].content);
+        // Generate a random response from the predefined list
+        console.log('Selecting random response...');
+        const randomResponseMessage = getRandomResponse();
+        console.log('Random response selected:', randomResponseMessage);
 
-          const randomResponse = {
-            chatId,
-            message: response.data[0].content,
-            timestamp: Date.now(),
-          };
+        const randomResponse = {
+          chatId,
+          message: randomResponseMessage,
+          timestamp: Date.now(),
+        };
 
-          console.log('Connecting to Kafka broker...');
-          await producer.connect();
-          console.log('Producer connected.');
+        console.log('Connecting to Kafka broker...');
+        await producer.connect();
+        console.log('Producer connected.');
 
-          console.log('Sending message to Kafka:', JSON.stringify(randomResponse));
-          await producer.send({
-            topic: 'random-responses',
-            messages: [{ value: JSON.stringify(randomResponse) }],
-          });
-          console.log('Message sent to Kafka.');
+        console.log('Sending message to Kafka:', JSON.stringify(randomResponse));
+        await producer.send({
+          topic: 'random-responses',
+          messages: [{ value: JSON.stringify(randomResponse) }],
+        });
+        console.log('Message sent to Kafka.');
 
-          await producer.disconnect();
-          console.log('Producer disconnected.');
+        await producer.disconnect();
+        console.log('Producer disconnected.');
 
-          const responseMessage = new Message({
-            chatId,
-            content: randomResponse.message,
-            userId: 'systemBot', // or another identifier for system-generated messages
-          });
+        const responseMessage = new Message({
+          chatId,
+          content: randomResponse.message,
+          userId: 'systemBot', // or another identifier for system-generated messages
+        });
 
-          await responseMessage.save();
-          console.log('Response message saved:', responseMessage);
+        await responseMessage.save();
+        console.log('Response message saved:', responseMessage);
 
-          return res.status(201).json({ success: true, data: newMessage });
-        } catch (apiError) {
-          console.error('Error fetching random quote:', apiError);
-          return res.status(500).json({ success: false, error: 'Failed to fetch random quote' });
-        }
+        return res.status(201).json({ success: true, data: newMessage });
       } catch (error) {
         console.error('Error processing POST request:', error);
         return res.status(400).json({ success: false, error: error.message });
