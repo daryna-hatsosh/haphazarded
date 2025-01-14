@@ -12,16 +12,20 @@ function ChatView({ chat, onBack, onDelete }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
 
   const fetchMessages = useCallback(async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setMessages(response.data.data);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  }, [chat._id]);
+  }, [chat._id, token]);
 
   useEffect(() => {
     fetchMessages();
@@ -34,6 +38,10 @@ function ChatView({ chat, onBack, onDelete }) {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`, {
         content: newMessage,
         userId: user.userId,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setMessages([...messages, response.data.data]);
       setNewMessage('');
