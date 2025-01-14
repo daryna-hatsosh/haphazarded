@@ -88,7 +88,7 @@ export default async function handler(req, res) {
         const responseMessage = new Message({
           chatId,
           content: randomResponse.message,
-          userId: 'systemBot', // or another identifier for system-generated messages
+          userId: '678531deb05ff3f439e2a4f0', // or another identifier for system-generated messages
         });
 
         await responseMessage.save();
