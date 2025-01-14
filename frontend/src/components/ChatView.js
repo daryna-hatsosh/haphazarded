@@ -29,6 +29,12 @@ function ChatView({ chat, onBack, onDelete }) {
 
   useEffect(() => {
     fetchMessages();
+
+    // Set up polling to fetch messages every 5 seconds
+    const intervalId = setInterval(fetchMessages, 5000);
+
+    // Clean up the interval on component unmount
+    return () => clearInterval(intervalId);
   }, [fetchMessages]);
 
   const handleSendMessage = async () => {
@@ -43,7 +49,8 @@ function ChatView({ chat, onBack, onDelete }) {
           Authorization: `Bearer ${token}`,
         },
       });
-      setMessages([...messages, response.data.data]);
+
+      setMessages((prevMessages) => [...prevMessages, response.data.data]);
       setNewMessage('');
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Error sending message');
