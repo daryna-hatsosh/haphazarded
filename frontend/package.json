@@ -1,7 +1,6 @@
 {
   "name": "frontend",
   "version": "0.1.0",
-  "homepage": "https://daryna-hatsosh.github.io/haphazarded",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -14,7 +13,8 @@
     "web-vitals": "^3.0.0",
     "axios": "^1.0.0",
     "@mui/icons-material": "^6.x.x",
-    "date-fns": "^2.29.3"
+    "date-fns": "^2.29.3",
+    "socket.io-client": "^4.0.0"
   },
   "scripts": {
     "predeploy": "npm run build",

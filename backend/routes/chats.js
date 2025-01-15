@@ -1,12 +1,11 @@
 import express from 'express';
 import Chat from '../models/Chat.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-import corsMiddleware from '../middleware/corsMiddleware.js';
 
 const router = express.Router();
 
 // Get all chats
-router.get('/', corsMiddleware, authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const userChats = await Chat.find({ userId: req.userId, type: 'user' }).sort({ createdAt: -1 });
     let predefinedChats = await Chat.find({ type: 'predefined', userId: req.userId }).sort({ createdAt: -1 });
@@ -28,7 +27,7 @@ router.get('/', corsMiddleware, authMiddleware, async (req, res) => {
 });
 
 // Create a new chat
-router.post('/', corsMiddleware, authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   const { firstName, lastName } = req.body;
   try {
     const newChat = new Chat({ firstName, lastName, userId: req.userId, type: 'user' });

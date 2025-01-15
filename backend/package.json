@@ -16,7 +16,8 @@
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.0",
     "web-vitals": "^2.1.0",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "socket.io": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
