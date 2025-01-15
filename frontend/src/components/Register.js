@@ -11,10 +11,10 @@ function Register({ onClose }) {
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/register`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/register`, {
         email,
         password,
-        username
+        username,
       });
       setMessage(response.data.message);
       setIsSuccess(true);

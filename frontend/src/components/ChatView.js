@@ -24,16 +24,13 @@ function ChatView({ chat, onBack, onDelete }) {
       setMessages(response.data.data);
     } catch (error) {
       console.error('Error fetching messages:', error);
+      setErrorMessage('Failed to fetch messages');
     }
   }, [chat._id, token]);
 
   useEffect(() => {
     fetchMessages();
-
-    // Set up polling to fetch messages every 5 seconds
     const intervalId = setInterval(fetchMessages, 5000);
-
-    // Clean up the interval on component unmount
     return () => clearInterval(intervalId);
   }, [fetchMessages]);
 
@@ -59,7 +56,11 @@ function ChatView({ chat, onBack, onDelete }) {
 
   const handleDeleteChat = async () => {
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/chats/${chat._id}`);
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/chats/${chat._id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       onDelete(chat._id);
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Error deleting chat');

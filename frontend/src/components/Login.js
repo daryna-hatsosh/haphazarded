@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { loginWithGoogle, loginWithEmail } from '../services/authService';
+import axios from 'axios';
 import { Box, Button, TextField, Typography, Paper } from '@mui/material';
 
 const Login = () => {
@@ -9,6 +9,19 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const handleEmailLogin = async () => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
+        email,
+        password,
+      });
+      login(response.data);
+    } catch (error) {
+      console.error('Email login failed', error);
+      setError('Invalid email or password');
+    }
+  };
+
   const handleGoogleLogin = async () => {
     try {
       const userData = await loginWithGoogle();
@@ -16,16 +29,6 @@ const Login = () => {
     } catch (error) {
       console.error('Google login failed', error);
       setError('Google login failed');
-    }
-  };
-
-  const handleEmailLogin = async () => {
-    try {
-      const userData = await loginWithEmail(email, password);
-      login(userData);
-    } catch (error) {
-      console.error('Email login failed', error);
-      setError('Invalid email or password');
     }
   };
 

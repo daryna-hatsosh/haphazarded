@@ -14,7 +14,6 @@ function runMiddleware(req, res, fn) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result) => {
       if (result instanceof Error) {
-        console.error('CORS middleware error:', result);
         return reject(result);
       }
       return resolve(result);
@@ -22,11 +21,6 @@ function runMiddleware(req, res, fn) {
   });
 }
 
-export default async function corsMiddleware(req, res, next) {
-  try {
-    await runMiddleware(req, res, cors);
-    next(); // Ensure next() is called to pass control to the next middleware or route handler
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'CORS error' });
-  }
+export default async function corsMiddleware(req, res) {
+  await runMiddleware(req, res, cors);
 } 
