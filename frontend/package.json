@@ -1,6 +1,8 @@
 {
   "name": "frontend",
   "version": "0.1.0",
+  "homepage": "https://daryna-hatsosh.github.io/haphazarded",
+  "proxy": "http://localhost:3001",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.14.0",
