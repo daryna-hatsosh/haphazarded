@@ -24,8 +24,9 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const userData = await loginWithGoogle();
-      login(userData);
+      console.log('Google login');
+      // const userData = await loginWithGoogle();
+      // login(userData);
     } catch (error) {
       console.error('Google login failed', error);
       setError('Google login failed');
