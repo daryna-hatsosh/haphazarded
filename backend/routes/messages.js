@@ -1,26 +1,13 @@
 import express from 'express';
 import Message from '../models/Message.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-import { Kafka } from 'kafkajs'; 
 import dotenv from 'dotenv';
+import { io } from '../server.js';
+import { sendMessageToKafka } from '../services/kafkaService.js'; // Import the Kafka service
+
 dotenv.config();
 
-import { io } from '../server.js';
 const router = express.Router();
-
-// Kafka configuration
-const kafka = new Kafka({
-  clientId: 'random-responses-producer',
-  brokers: [process.env.BROKERS]
-});
-
-const producer = kafka.producer();
-
-// Ensure Kafka producer connects
-(async () => {
-  await producer.connect();
-  console.log('Kafka producer connected');
-})();
 
 // Predefined list of random responses
 const predefinedResponses = [
@@ -42,12 +29,26 @@ function getRandomResponse() {
   return predefinedResponses[randomIndex];
 }
 
-// Get messages for a chat
+// Get messages for a chat with pagination
 router.get('/:chatId', authMiddleware, async (req, res) => {
   const { chatId } = req.params;
+  const { page = 1, limit = 5 } = req.query; // Default to page 1 and 5 messages per page
+
   try {
-    const messages = await Message.find({ chatId });
-    res.status(200).json({ success: true, data: messages });
+    const messages = await Message.find({ chatId })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const totalMessages = await Message.countDocuments({ chatId });
+    const totalPages = Math.ceil(totalMessages / limit);
+
+    res.status(200).json({
+      success: true,
+      data: messages,
+      totalPages,
+      currentPage: parseInt(page),
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -73,12 +74,8 @@ router.post('/:chatId', authMiddleware, async (req, res) => {
       timestamp: Date.now(),
     };
 
-    console.log('Sending message to Kafka:', JSON.stringify(randomResponse));
-    await producer.send({
-      topic: 'random-responses',
-      messages: [{ value: JSON.stringify(randomResponse) }],
-    });
-    console.log('Message sent to Kafka.');
+    // Send message to Kafka
+    await sendMessageToKafka('random-responses', randomResponse);
 
     const responseMessage = new Message({
       chatId,

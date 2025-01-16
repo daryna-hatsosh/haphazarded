@@ -1,5 +1,20 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Box, Typography, Paper, TextField, IconButton, Avatar, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, Alert } from '@mui/material';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import {
+  Box,
+  Typography,
+  Paper,
+  TextField,
+  IconButton,
+  Avatar,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Snackbar,
+  Alert,
+} from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -8,8 +23,7 @@ import { format, isToday } from 'date-fns';
 import { AuthContext } from '../context/AuthContext';
 import io from 'socket.io-client';
 
-// Custom hook for managing socket connections
-function useChatSocket(chatId, token, setMessages) {
+function useChatSocket(chatId, token, addMessage) {
   const socketRef = useRef();
 
   useEffect(() => {
@@ -18,80 +32,118 @@ function useChatSocket(chatId, token, setMessages) {
     });
 
     socketRef.current.on('connect', () => {
-      console.log('Connected to WebSocket server');
       socketRef.current.emit('joinChat', chatId);
     });
 
     socketRef.current.on('message', (message) => {
-      console.log('Received message:', message);
-      setMessages((prevMessages) => [...prevMessages, message]);
+      addMessage(message);
     });
 
     return () => {
       socketRef.current.emit('leaveChat', chatId);
       socketRef.current.disconnect();
     };
-  }, [chatId, token, setMessages]);
-
-  return socketRef;
+  }, [chatId, token, addMessage]);
 }
 
 function ChatView({ chat, onBack, onDelete }) {
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
   const { user, token } = useContext(AuthContext);
   const messagesEndRef = useRef();
 
-  // Initialize socket connection
-  useChatSocket(chat._id, token, setMessages);
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+  useChatSocket(chat._id, token, (message) => {
+    setMessages((prev) => {
+      const exists = prev.some((msg) => msg._id === message._id);
+      return exists ? prev : [...prev, message];
+    });
+    scrollToBottom();
+  });
+
+  const fetchMessages = useCallback(async (page) => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { page, limit: 10 },
+      });
+
+      if (response.data.success) {
+        setMessages((prevMessages) => {
+          const uniqueMessages = response.data.data.reverse().filter(
+            (newMsg) => !prevMessages.some((prevMsg) => prevMsg._id === newMsg._id)
+          );
+          return [...uniqueMessages, ...prevMessages];
         });
-        if (response.data.success) {
-          setMessages(response.data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching messages:', error);
+        setHasMore(response.data.currentPage < response.data.totalPages);
       }
-    };
-
-    fetchMessages();
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [chat._id, token]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    setMessages([]);
+    setPage(1);
+    setHasMore(true);
+    fetchMessages(1).then(() => {
+      scrollToBottom();
+    });
+  }, [chat._id, fetchMessages, scrollToBottom]);
+
+  useEffect(() => {
+    if (page === 1) {
+      scrollToBottom();
+    }
+  }, [messages, scrollToBottom, page]);
+
+  const handleLoadOlderMessages = () => {
+    if (hasMore && !loading) {
+      setPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  useEffect(() => {
+    if (page > 1) {
+      fetchMessages(page);
+    }
+  }, [page, fetchMessages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
     const tempMessage = {
-      _id: Date.now(),
+      _id: Date.now().toString(),
       content: newMessage,
       userId: user.userId,
       createdAt: new Date().toISOString(),
     };
 
-    setMessages((prevMessages) => [...prevMessages, tempMessage]);
+    setMessages((prev) => [...prev, tempMessage]);
     setNewMessage('');
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`, {
-        content: newMessage,
-        userId: user.userId,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/messages/${chat._id}`,
+        { content: newMessage, userId: user.userId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       if (response.data.success) {
         setMessages((prevMessages) => {
-          const tempIndex = prevMessages.findIndex(msg => msg._id === tempMessage._id);
+          const tempIndex = prevMessages.findIndex((msg) => msg._id === tempMessage._id);
           if (tempIndex !== -1) {
             const updatedMessages = [...prevMessages];
             updatedMessages[tempIndex] = response.data.data;
@@ -103,23 +155,6 @@ function ChatView({ chat, onBack, onDelete }) {
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  };
-
-  const handleDeleteChat = async () => {
-    try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/chats/${chat._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      onDelete(chat._id);
-    } catch (error) {
-      setErrorMessage(error.response?.data?.message || 'Error deleting chat');
-    } finally {
-      setOpenDeleteDialog(false);
-    }
-  };
-
-  const handleCloseSnackbar = () => {
-    setErrorMessage('');
   };
 
   const formatTimestamp = (timestamp) => {
@@ -143,10 +178,17 @@ function ChatView({ chat, onBack, onDelete }) {
           <DeleteIcon />
         </IconButton>
       </Box>
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2, p: 2 }}>
+      <Box
+        sx={{ flexGrow: 1, overflowY: 'auto', mb: 2, p: 2, minHeight: '300px' }}
+      >
+        {hasMore && (
+          <Button onClick={handleLoadOlderMessages} disabled={loading} fullWidth>
+            Load Older Messages
+          </Button>
+        )}
         {messages.map((message) => (
           <Box
-            key={message._id}
+            key={`${message._id}-${message.createdAt}`}
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -167,7 +209,9 @@ function ChatView({ chat, onBack, onDelete }) {
                 whiteSpace: 'pre-wrap',
               }}
             >
-              <Typography variant="body1" sx={{ mb: 0.5 }}>{message.content}</Typography>
+              <Typography variant="body1" sx={{ mb: 0.5 }}>
+                {message.content}
+              </Typography>
             </Box>
             <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5 }}>
               {formatTimestamp(message.createdAt)}
@@ -204,19 +248,17 @@ function ChatView({ chat, onBack, onDelete }) {
           <Button onClick={() => setOpenDeleteDialog(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteChat} sx={{ color: '#FF6B6B' }}>
+          <Button onClick={() => onDelete(chat._id)} sx={{ color: '#FF6B6B' }}>
             Delete
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
-          {errorMessage}
-        </Alert>
+      <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={() => setErrorMessage('')}>
+        <Alert severity="error">{errorMessage}</Alert>
       </Snackbar>
     </Paper>
   );
 }
 
-export default ChatView; 
+export default ChatView;
